@@ -27,9 +27,10 @@ import os
 import logging
 import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+from service.models import Product, Category, db, DataValidationError
 from service import app
 from tests.factories import ProductFactory
+# from service.common import error_handlers as error_handlers
 
 DATABASE_URI = os.getenv(
         "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -121,6 +122,7 @@ class TestProductModel(unittest.TestCase):
         """It should Update a Product"""
         product = ProductFactory()
         product.id = None
+        self.assertRaises(DataValidationError, product.update)
         product.create()
         self.assertIsNotNone(product.id)
         # Change it an save it
@@ -135,6 +137,9 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0].id, original_id)
         self.assertEqual(products[0].description, "testing")
+        serialized_data = product.serialize()
+        product.deserialize(serialized_data)
+        # self.assertRaises(DataValidationError,product.deserialize(d))
 
     def test_delete_a_product(self):
         """It should Delete a Product"""
